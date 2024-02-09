@@ -9,7 +9,7 @@ from django.contrib.auth.models import (
 )
 
 
-class UserManager(UserManager):
+class UserManager(BaseUserManager):
     """Manager for users."""
 
     def create_user(self, email, password=None, **extra_fields):
@@ -28,10 +28,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
-    object = UserManager()
+    objects = UserManager()
 
-    USERNAME_FIELD='email'
-
-
-
-
+    USERNAME_FIELD = 'email'
