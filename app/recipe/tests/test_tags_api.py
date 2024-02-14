@@ -58,11 +58,12 @@ class PrivateTagsApiTests(TestCase):
         # We will check the results.
         tags = Tag.objects.all().order_by('-name')
         # And then we're going to serialize the tags and then compare the
-        # response data to the serialized data. So it will be a list of objects.
+        # response data to the serialized data.
+        # So it will be a list of objects.
         serializer = TagSerializer(tags, many=True)
-        # And then we're going to compare the response data to the serialized data.
+        # We're going to compare the response data to the serialized data.
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        # And then we're going to compare the response data to the serialized data.
+        # We're going to compare the response data to the serialized data.
         self.assertEqual(res.data, serializer.data)
         # So that's testing the retrieve tags, basic test.
 
@@ -73,7 +74,7 @@ class PrivateTagsApiTests(TestCase):
         # And then we've created a tag for that particular user.
         # It's going to be a fruity tag :)
         Tag.objects.create(user=user2, name='Fruity')
-        # And then we're going to create another tag for our authenticated user.
+        # And then we're going to create another tag for our authenticated user
         tag = Tag.objects.create(user=self.user, name='Comfort Food')
 
         res = self.client.get(TAGS_URL)
