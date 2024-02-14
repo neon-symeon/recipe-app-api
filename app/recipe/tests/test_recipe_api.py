@@ -1,8 +1,8 @@
 """
-Test for recipe APIs.
+Tests for recipe APIs.
 """
-
 from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -32,7 +32,7 @@ def create_recipe(user, **params):
         'time_minutes': 22,
         'price': Decimal('5.25'),
         'description': 'Sample description',
-        'link': 'https://example.com/recipe.pdf',
+        'link': 'http://example.com/recipe.pdf',
     }
     defaults.update(params)
 
@@ -59,7 +59,7 @@ class PublicRecipeAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
-class PrivateRecieAPITest(TestCase):
+class PrivateRecipeAPITests(TestCase):
     """Test authenticated API request."""
 
     def setUp(self):
@@ -68,7 +68,7 @@ class PrivateRecieAPITest(TestCase):
         self.client.force_authenticate(self.user)
 
     def test_retrieve_recipes(self):
-        """Test retrieving a lsit of recipes."""
+        """Test retrieving a list of recipes."""
         create_recipe(user=self.user)
         create_recipe(user=self.user)
 
@@ -80,7 +80,7 @@ class PrivateRecieAPITest(TestCase):
         self.assertEqual(res.data, serializer.data)
 
     def test_recipe_list_limited_to_user(self):
-        """Test list of recipes is limited to autnehnticated user."""
+        """Test list of recipes is limited to authenticated user."""
         other_user = create_user(email='other@example.com', password='test123')
         create_recipe(user=other_user)
         create_recipe(user=self.user)
@@ -140,14 +140,15 @@ class PrivateRecieAPITest(TestCase):
         """Test full update of the recipe."""
         recipe = create_recipe(
             user=self.user,
-            title='Sample recipe title.',
+            title='Sample recipe title',
             link='https://example.com/recipe.pdf',
+            description='Sample recipe description.',
         )
 
         payload = {
             'title': 'New recipe title',
             'link': 'https://example.com/new-recipe.pdf',
-            'description': 'new recipedescription',
+            'description': 'New recipede scription',
             'time_minutes': 10,
             'price': Decimal('2.50'),
         }
@@ -185,7 +186,7 @@ class PrivateRecieAPITest(TestCase):
 
     def test_delete_other_users_recipe_error(self):
         """Test trying to delete another users recipe gives an error."""
-        new_user = create_user(email='user2@example.com', password='pass123')
+        new_user = create_user(email='user2@example.com', password='test123')
         recipe = create_recipe(user=new_user)
 
         url = detail_url(recipe.id)

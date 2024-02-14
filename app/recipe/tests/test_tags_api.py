@@ -1,7 +1,6 @@
 """
 Tests for the Tag API.
 """
-from typing import Any
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.test import TestCase
@@ -18,7 +17,7 @@ TAGS_URL = reverse('recipe:tag-list')
 
 
 def create_user(email='user@example.com', password='testpass123'):
-    """Create and return a user fo tests."""
+    """Create and return a user for tests."""
     return get_user_model().objects.create_user(email=email, password=password)
 
 
@@ -62,7 +61,7 @@ class PrivateTagsApiTests(TestCase):
         # response data to the serialized data. So it will be a list of objects.
         serializer = TagSerializer(tags, many=True)
         # And then we're going to compare the response data to the serialized data.
-        self.assertEqual(res.data, status.HTTP_200_OK)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
         # And then we're going to compare the response data to the serialized data.
         self.assertEqual(res.data, serializer.data)
         # So that's testing the retrieve tags, basic test.
@@ -77,7 +76,7 @@ class PrivateTagsApiTests(TestCase):
         # And then we're going to create another tag for our authenticated user.
         tag = Tag.objects.create(user=self.user, name='Comfort Food')
 
-        res = self.client.get(TAG_URL)
+        res = self.client.get(TAGS_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 1)
