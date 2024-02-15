@@ -10,7 +10,11 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Recipe
+from core.models import (
+    Recipe,
+    Tag,
+)
+
 
 from recipe.serializers import (
     RecipeSerializer,
@@ -194,3 +198,81 @@ class PrivateRecipeAPITests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
         self.assertTrue(Recipe.objects.filter(id=recipe.id).exists())
+
+    def test_create_recipe_with_new_tags(self):
+        """Test creating a recipe with new tags."""
+        # So first we setting up the payload and then we are posting
+        # that payload to the recipes API.
+        payload = {
+            'title': 'Thai Prawn Curry',
+            'time_minutes': 30,
+            'price': Decimal('2.50'),
+            'tags': [{'name': 'Thai'}, {'name': 'Dinner'}],
+        }
+        res = self.client.post(RECIPES_URL, payload, format='json')
+
+        # Then after that we have assert that the response code was hosted
+        # to be 200 or 201 created, which is what we expect when
+        # we create new objects.
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        # And then we are filtering all of the recipes that are currently
+        # assigned to the authenticated user...
+        recipes = Recipe.objects.filter(user=self.user)
+        # and we're checking out the count of those recipes as one.
+        self.assertEqual(recipes.count(), 1)
+        # We then assign the recipe variable to the first item
+        # that was returned in recipes.
+        recipe = recipes[0]
+        # So there should be two tags: one is Thai and the other is Dinner.
+        # And if there's any other number of attacks,
+        # then we know that something's wrong.
+        self.assertEqual(recipe.tags.count(), 2)
+        # Then we loop through each tag that we expect to be created,
+        # and we check that they exist, with the correct name and user.
+        # This will tell us not only that the tags were created,
+        # but the correct names were also assigned to those tags
+        # and the correct user owns those tags, so it makes sure that
+        # the functionality is working as expected.
+        for tag in payload['tags']:
+            exists = recipe.tags.filter(
+                name=tag['name'],
+                user=self.user,
+            ).exists()
+            self.assertTrue(exists)
+
+    def test_create_recipe_with_existing_tags(self):
+        """Test creating a recipe with existing tags."""
+        # This is going to be a recipe for an indian meal.
+        tag_indian = Tag.objects.create(user=self.user, name='Indian')
+
+        # we have a payload for a new recipe and that recipe has two tags
+        # in the payload. So we already created one tag up here, which is
+        #  one of the tags that's being used providing the name matches.
+        # We would expect Indian tag to be assigned to the new recipe
+        # as opposed to creating a new tag with 'Breakfast' name.
+        # And because we don't already have a breakfast tag, we would expect
+        # that tag to be additionally created.
+        # So the point here is that we wouldn't expect that to be three
+        # different tags. We would expect there to be two tags at the end.
+        payload = {
+            'title': 'Pongal',
+            'time_minutes': 60,
+            'price': Decimal('4.50'),
+            'tags': [{'name': 'Indian'}, {'name': 'Breakfast'}],
+        }
+        res = self.client.post(RECIPES_URL, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        recipes = Recipe.objects.filter(user=self.user)
+        self.assertEqual(recipes.count(), 1)
+        recipe = recipes[0]
+        self.assertEqual(recipe.tags.count(), 2)
+        # So this ensures that this specific tag that we created exists in the
+        # tags that were assigned to the recipe.
+        self.assertIn(tag_indian, recipe.tags.all())
+        for tag in payload.tags:
+            exists = recipe.tags.filter(
+                name=tag['name'],
+                user=self.user,
+            ).exists()
+            self.assertTrue(exists)
