@@ -39,12 +39,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
-class TagViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+class TagViewSet(mixins.DestroyModelMixin,  # Allows to delete a model.
+                 mixins.UpdateModelMixin,  # Allows to update a model.
+                 mixins.ListModelMixin,
+                 viewsets.GenericViewSet):
     """Manage tags in the database."""
     serializer_class = serializers.TagSerializer
     queryset = Tag.objects.all()
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]  ## It is very important that
+    permission_classes = [IsAuthenticated]  # It is very important that
     # this is spelled correctly. So if you misspell any of these, then you'll
     # have unpredictable behavior. It won't necessarily give you an error,
     # but it will give you a lot of issues that are very hard to debug.

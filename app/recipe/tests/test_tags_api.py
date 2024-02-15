@@ -16,6 +16,11 @@ from recipe.serializers import TagSerializer
 TAGS_URL = reverse('recipe:tag-list')
 
 
+def detail_url(tag_id):
+    """Create and return tag detail URL."""
+    return reverse('recipe:tag-detail', args=[tag_id])
+
+
 def create_user(email='user@example.com', password='testpass123'):
     """Create and return a user for tests."""
     return get_user_model().objects.create_user(email=email, password=password)
@@ -25,7 +30,11 @@ class PublicTagsApiTests(TestCase):
     """Test unauthenticated API requests."""
     def setUp(self):
         self.client = APIClient()
-        # And this test case basically means an unauthenticated request
+
+    def test_auth_required(self):
+        """Test that authentication is required for retrieving tags."""
+        res = self.client.get(TAGS_URL)
+        # This test case basically means an unauthenticated request
         # to the tags-list endpoint. And what we would expect in our situation
         # is to just get a 401 unauthorized. We don't expect to see
         # any tags because we haven't authenticated, so it doesn't know which
@@ -83,3 +92,26 @@ class PrivateTagsApiTests(TestCase):
         self.assertEqual(len(res.data), 1)
         self.assertEqual(res.data[0]['name'], tag.name)
         self.assertEqual(res.data[0]['id'], tag.id)
+
+    def test_update_tag(self):
+        """Test updating a tag."""
+        tag = Tag.objects.create(user=self.user, name='After Dinner')
+
+        payload = {'name': 'Dessert'}
+        url = detail_url(tag.id)
+        res = self.client.patch(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        tag.refresh_from_db()
+        self.assertEqual(tag.name, payload['name'])
+
+    def test_delete_tag(self):
+        """Test deleting a tag."""
+        tag = Tag.objects.create(user=self.user, name='Breakfast')
+
+        url = detail_url(tag.id)
+        res = self.client.delete(url)
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        tags = Tag.objects.filter(user=self.user)
+        self.assertFalse(tags.exists())
